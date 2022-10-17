@@ -1,0 +1,383 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CloudFormation template for s3 bucket
+Parameters:
+  ElasticSearchName:
+    Type: String
+    Description:
+      "domain name of elastic search service"
+    Default : "cloudformation-photo011"  
+
+  ApiGatewayName:
+    Type: String
+    Default: 'cloudformation-aiphotosearch-api011'
+  
+  ApiGatewayStageName:
+    Type: String
+    AllowedPattern: "[a-z0-9]+"
+    Default: dev
+
+  ApiGatewayHTTPMethod:
+    Type: String
+    Default: GET
+
+  ApiGatewayHTTPMethod1:
+    Type: String
+    Default: PUT
+  
+  GitHubRepo:
+    Type: String
+
+  GitHubBranch:
+    Type: String
+    Default: main
+
+  GitHubUser:
+    Type: String
+
+
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: cc-011
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: cc-021
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+  
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: cc-031
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+  
+  CFNLambda:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: cctest011-lf1
+      Handler: lambda/cctest011-lf1.lambda_handler
+      Role:
+        'Fn::GetAtt':
+          - CFNLambdaRole
+          - Arn
+      Code:
+        S3Bucket: s3-bucket-b2
+        S3Key: cfn_lambda.zip
+      Runtime: python3.8
+      Timeout: 300
+  CFNLambdaRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: cc-testrole011
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: AWSLambdaBasicExecutionRole
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: '*'
+        - PolicyName: AmazonS3FullAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 's3:*'
+                Resource:
+                  - 'arn:aws:s3:::exchange-data-raw'
+                  - 'arn:aws:s3:::exchange-data-raw/*'
+  
+  CFNLambda:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: cctest021
+      Handler: lambda/cctest021.lambda_handler
+      Role:
+        'Fn::GetAtt':
+          - CFNLambdaRole
+          - Arn
+      Code:
+        S3Bucket: s3-bucket-b2
+        S3Key: cfn_lambda.zip
+      Runtime: python3.8
+      Timeout: 300
+  CFNLambdaRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: cctest-role02
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: AWSLambdaBasicExecutionRole
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: '*'
+        - PolicyName: AmazonS3FullAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 's3:*'
+                Resource:
+                  - 'arn:aws:s3:::exchange-data-raw'
+                  - 'arn:aws:s3:::exchange-data-raw/*'
+  ElasticSearchDemo:
+      Type: AWS::Elasticsearch::Domain
+      Properties:
+        ElasticsearchVersion: '7.10'
+        DomainName:  !Ref ElasticSearchName
+        ElasticsearchClusterConfig:
+          DedicatedMasterEnabled: false
+          InstanceCount: 1
+          ZoneAwarenessEnabled: false
+          InstanceType: t2.small.elasticsearch
+        EBSOptions:
+          EBSEnabled: true
+          Iops: 0
+          VolumeSize: 10
+          VolumeType: 'gp2'
+        AccessPolicies:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                AWS: '*'
+              Action: 'es:ESHttp*'
+              Resource: !Sub arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${ElasticSearchName}/*
+              Condition:
+                IpAddress:
+                   aws:SourceIp: ["12.13.14.15"]
+  ApiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Description: Voice Enabled Photo Search application, built during the Cloud and Big Data course at NYU.
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      Name: !Ref ApiGatewayName
+
+  ArtifactBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+
+  CodeStarConnection:
+    Type: 'AWS::CodeStarConnections::Connection'
+    Properties:
+      ConnectionName: CfnExamplesGitHubConnection
+      ProviderType: GitHub
+  
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: "logs"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+                -
+                  Effect: "Allow"
+                  Action:
+                      - logs:CreateLogGroup
+                      - logs:CreateLogStream
+                      - logs:PutLogEvents
+                      - ecr:GetAuthorizationToken
+                      - ssm:GetParameters
+                  Resource: "*"
+        - PolicyName: "S3"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+                -
+                  Effect: "Allow"
+                  Action:
+                      - s3:GetObject
+                      - s3:PutObject
+                      - s3:GetObjectVersion
+                  Resource: !Sub arn:aws:s3:::${ArtifactBucket}/*
+
+  CodePipelineServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Resource:
+                  - !Sub arn:aws:s3:::${ArtifactBucket}/*
+                  - !Sub arn:aws:s3:::${ArtifactBucket}
+                Effect: Allow
+                Action:
+                  - s3:*
+              - Resource: "*"
+                Effect: Allow
+                Action:
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuilds
+                  - iam:PassRole
+              - Resource:
+                  - !Ref CodeStarConnection
+                Effect: Allow
+                Action:
+                  - codestar-connections:UseConnection
+              - Resource: "*"
+                Effect: Allow
+                Action:
+                  - codedeploy:CreateDeployment
+                  - codedeploy:CreateDeploymentGroup
+                  - codedeploy:GetApplication
+                  - codedeploy:GetApplicationRevision
+                  - codedeploy:GetDeployment
+                  - codedeploy:GetDeploymentConfig
+                  - codedeploy:RegisterApplicationRevision
+
+  Pipeline1:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt CodePipelineServiceRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactBucket
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: App
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: '1'
+                Provider: CodeStarSourceConnection
+              Configuration:
+                ConnectionArn: !Ref CodeStarConnection
+                BranchName: !Ref GitHubBranch
+                FullRepositoryId: !Sub ${GitHubUser}/${GitHubRepo}
+              OutputArtifacts:
+                - Name: AppArtifact
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: Build
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: '1'
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref CodeBuildProject
+              InputArtifacts:
+                - Name: AppArtifact
+              OutputArtifacts:
+                - Name: BuildOutput
+              RunOrder: 1
+
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: buildspec.yml
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/docker:17.09.0
+        Type: LINUX_CONTAINER
+      Name: !Ref AWS::StackName
+      ServiceRole: !Ref CodeBuildServiceRole
+
+  Pipeline2:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt CodePipelineServiceRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactBucket
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: App
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: '1'
+                Provider: CodeStarSourceConnection
+              Configuration:
+                ConnectionArn: !Ref CodeStarConnection
+                BranchName: !Ref GitHubBranch
+                FullRepositoryId: !Sub ${GitHubUser}/${GitHubRepo}
+              OutputArtifacts:
+                - Name: AppArtifact
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: Build
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: '1'
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref CodeBuildProject
+              InputArtifacts:
+                - Name: AppArtifact
+              OutputArtifacts:
+                - Name: BuildOutput
+              RunOrder: 1

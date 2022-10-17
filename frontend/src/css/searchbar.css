@@ -1,0 +1,121 @@
+ul {
+    list-style-type: none;
+    overflow: hidden;
+}
+
+li {
+    float: right;
+}
+
+li a {
+    color: #000;
+    display: block;
+    text-align: center;
+    padding: 10px 10px;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+li a:hover {
+    text-decoration: underline;
+}
+
+.grid {
+    height: 23px;
+    position: relative;
+    bottom: 4px;
+}
+
+.logo {
+    margin-top: 200px;
+    margin-bottom: 20px;
+}
+
+.bar {
+    margin: 0 auto;
+    width: 625px;
+    border-radius: 30px;
+    border: 1px solid #dcdcdc;
+}
+
+.bar:hover {
+    box-shadow: 1px 1px 8px 1px #dcdcdc;
+}
+
+.bar:focus-within {
+    box-shadow: 1px 1px 8px 1px #dcdcdc;
+    outline: none;
+}
+
+#searchbar {
+    height: 45px;
+    border: none;
+    width: 500px;
+    font-size: 16px;
+    outline: none;
+    background-color: #f8f8f8;
+}
+
+.voice,
+.upload {
+    height: 30px;
+    position: relative;
+    top: 8px;
+    left: 5px;
+    cursor: pointer;
+}
+
+
+.buttons {
+    margin-top: 30px;
+}
+
+.button {
+    background-color: #f5f5f5;
+    border: none;
+    color: #707070;
+    font-size: 15px;
+    padding: 10px 20px;
+    margin: 5px;
+    border-radius: 4px;
+    outline: none;
+}
+
+.button:hover {
+    border: 1px solid #c8c8c8;
+    padding: 9px 19px;
+    color: #808080;
+}
+
+.button:focus {
+    border: 1px solid #4885ed;
+    padding: 9px 19px;
+}
+
+.recording-circle {
+    position: relative;
+    display: inline-block;
+    background-color: red;
+    width: 20px;
+    height: 20px;
+    top: 3px;
+    left: 5px;
+    border-radius: 50%;
+    animation: ease pulse 2s infinite;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+@keyframes pulse {
+    0% {
+        background-color: red;
+    }
+
+    50% {
+        background-color: #fee6e6;
+    }
+
+    100% {
+        background-color: red;
+    }
+}
